@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { Fund, type IFund } from '@/models/fund';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Click } from '@/models/click';
+import { Answer } from '@/models/answer';
 
 export const findUsers: RequestHandler = async (_req, res) => {
   console.log('findUsers');

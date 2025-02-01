@@ -9,6 +9,7 @@ import { Notification } from '@/models/notification';
 import { Question } from '@/models/question';
 import { Section } from '@/models/section';
 import { addProcessAssessmentJob } from '@/queues/processAssessmentQueue';
+import { calculateRanking } from '@/utils/calculateRanking';
 import {
   addMonths,
   differenceInSeconds,
@@ -251,6 +252,58 @@ export const findAssessmentAnswers: RequestHandler = async (req, res) => {
   return res.status(200).json(answers);
 };
 
+export const findAUsersAssessment: RequestHandler = async (req, res) => {
+  const userId = (req.user as JwtPayload)._id;
+
+  const assessment = await Assessment.find({
+    userId: userId,
+  });
+  return res.status(200).json(assessment);
+};
+
+export const findAverageScore: RequestHandler = async (_req, res) => {
+  const assessments = await Assessment.find();
+  const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
+  const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
+  const accScoreList = scoreList.reduce((acc, curr) => {
+    return {
+      confidence: acc.confidence + getScore(curr, "Confidence"),
+      knowledgeability: acc.knowledgeability + getScore(curr, "Knowledgeability"),
+      determination: acc.determination + getScore(curr, "Determination"),
+      evangelism: acc.evangelism + getScore(curr, "Evangelism"),
+      workEthic: acc.workEthic + getScore(curr, "Work Ethic"),
+      vision: acc.vision + getScore(curr, "Vision"),
+      interests: acc.interests + getScore(curr, "Interests"),
+      pastWorkQuality: acc.pastWorkQuality + getScore(curr, "Past Work Quality"),
+      intelligence: acc.intelligence + getScore(curr, "Intelligence"),
+      personality: acc.personality + getScore(curr, "Personality"),
+      horsepower: acc.horsepower + getScore(curr, "Horsepower"),
+      hustle: acc.hustle + getScore(curr, "Hustle"),
+      curiosity: acc.curiosity + getScore(curr, "Curiosity"),
+      focus: acc.focus + getScore(curr, "Focus"),
+      ferocity: acc.ferocity + getScore(curr, "Ferocity"),
+    };
+  }, {
+    confidence: 0,
+    knowledgeability: 0,
+    determination: 0,
+    evangelism: 0,
+    workEthic: 0,
+    vision: 0,
+    interests: 0,
+    pastWorkQuality: 0,
+    intelligence: 0,
+    personality: 0,
+    horsepower: 0,
+    hustle: 0,
+    curiosity: 0,
+    focus: 0,
+    ferocity: 0,
+  });
+  const avgScoreList = Object.fromEntries(Object.entries(accScoreList).map(([key, value]) => [key, value / assessments.length]));
+  return res.status(200).json(avgScoreList);
+};
+
 export const findAssessmentDetails: RequestHandler = async (req, res, next) => {
   try {
     const { assessmentId } = req.params;
@@ -270,4 +323,8 @@ export const findAssessmentDetails: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+const getScore = (jsonScores: any[], scoreName: string) => {
+  return jsonScores.find((score) => score.category.toLowerCase() === scoreName.toLowerCase())?.score || 0;
 };
