@@ -15,8 +15,8 @@ import fs from 'fs';
 import AWS from 'aws-sdk';
 
 const s3 = new AWS.S3({
-  accessKeyId: "AKIAU5LH55ZKQYO7FNMR",
-  secretAccessKey: "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",
+  accessKeyId: process.env.AWS_ACCESS_KEY as string,
+  secretAccessKey: process.env.AWS_SECRET_KEY as string,
   region: "eu-north-1"
 });
 

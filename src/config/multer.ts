@@ -10,35 +10,14 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// const storage = multer.diskStorage({
-//   destination: function (_req, _file, cb) {
-//     cb(null, uploadDir);
-//   },
-//   filename: function (_req, file, cb) {
-//     const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-//     cb(null, uniquePrefix + '-' + file.originalname);
-//   },
 // });
 
 const FILE_TYPES = ['video/mp4', 'video/webm'];
 
-// export const upload = multer({
-//   storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 200, // 200 MB in bytes
-//   },
-//   fileFilter: (_req, file, cb) => {
-//     if (FILE_TYPES.includes(file.mimetype)) {
-//       cb(null, true);
-//     } else {
-//       cb(new Error('Invalid file type'));
-//     }
-//   },
-// });
 const s3 = new S3Client({
   credentials: {
-    accessKeyId: "AKIAU5LH55ZKQYO7FNMR",
-    secretAccessKey: "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"
+    accessKeyId: process.env.AWS_ACCESS_KEY as string,
+    secretAccessKey: process.env.AWS_SECRET_KEY as string
   },
   region: "eu-north-1"
 })
