@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noPropertyAccessFromIndexSignature": false,
+    "ignoreDeprecations": "5.0",
+    "noImplicitAny": false,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src", "./types.d.ts"],
+  "exclude": ["node_modules", "dist", "src/__tests__"]
+}
