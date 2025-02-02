@@ -189,11 +189,11 @@ export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
       {
         $group: {
           _id: '$fund',
-          overallScore: { $avg: '$assessments.score' },
+          overallScore: { $sum: '$assessments.score' },
           username: { $first: '$username' },
           twitterScore: { $first: '$twitterScore' },
-          totalRewardsEarned: { $first: '$totalRewardsEarned' },
-          twitterId: { $first: '$twitterId' }
+          twitterId: { $first: '$twitterId' },
+          xp: { $first: '$xp' }
         }
       },
       { $sort: { overallScore: -1 } },
@@ -202,7 +202,7 @@ export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
           _id: 1,
           username: 1,
           twitterScore: 1,
-          totalRewardsEarned: 1,
+          xp: 1,
           overallScore: 1,
           twitterId: 1
         }

@@ -40,6 +40,7 @@ export interface IUser {
   linkedinId?: string;
   instagramId?: string;
   worldidId?: string;
+  xp: number;
 }
 
 const userSchema = new Schema<IUser>(
@@ -95,6 +96,10 @@ const userSchema = new Schema<IUser>(
       ref: 'Fund',
     },
     twitterScore: {
+      type: Number,
+      default: 0,
+    },
+    xp: {
       type: Number,
       default: 0,
     },
