@@ -8,6 +8,7 @@ import {
   findUser,
   getTopTwitterScoreUsers,
   getReferrals,
+  findUserRank,
 } from '@/controllers/users';
 import { isAdmin } from '@/middleware/isAdmin';
 import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
@@ -33,6 +34,7 @@ router.get('/leadership', getTopTwitterScoreUsers);
 router.get('/referrals', auth, getReferrals);
 router.get('/clicks', auth, getClicks);
 router.get('/daily-xp', setDailyXP);
+router.get('/rank', auth, findUserRank);
 router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
 
 export default router;

@@ -8,7 +8,6 @@ import crypto from 'crypto';
 import { Fund, type IFund } from '@/models/fund';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Click } from '@/models/click';
-import { Answer } from '@/models/answer';
 
 export const findUsers: RequestHandler = async (_req, res) => {
   console.log('findUsers');
@@ -150,6 +149,19 @@ export const findUserAssessments: RequestHandler = async (req, res) => {
   }).populate({ path: 'userId', select: 'username email' });
 
   return res.status(200).json(assessments);
+};
+
+export const findUserRank: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req.user as JwtPayload)._id;
+    const targetUser = await User.findById(userId).populate('fund').select('-password -__v');
+    const users = await User.find({ role: 'user' }).select('-password -__v');
+    const rank = users.filter(user => user.xp > targetUser!.xp).length + 1;
+    const percentile = (rank / users.length) * 100;
+    return res.status(200).json({ rank, percentile });
+  } catch (error) {
+    return res.status(500).json({ error: (error as Error).message });
+  }
 };
 
 export const getReferrals: RequestHandler = async (req, res) => {
