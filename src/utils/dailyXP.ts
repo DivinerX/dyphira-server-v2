@@ -1,5 +1,5 @@
 import { User } from "../models/user";
-export const setDailyXP = async (_req, res) => {
+export const setDailyXP = async () => {
   try{
     const users = await User.aggregate([
       { $match: { role: 'user', _id: { $ne: null } } },
@@ -62,9 +62,7 @@ export const setDailyXP = async (_req, res) => {
       await userfinded!.save();
     }));
     console.log(referralScore);
-    return res.status(200).json(topUsers);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error' });
   }
 }

@@ -1,8 +1,5 @@
-import { getSocketIO } from '@/config/socket-io';
-import { Notification } from '@/models/notification';
 import { Reward } from '@/models/reward';
 import { User } from '@/models/user';
-import { claimUSDC } from '@/utils/claimUSDC';
 import type { RequestHandler } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 import mongoose from 'mongoose';
@@ -98,72 +95,6 @@ export const addReward: RequestHandler = async (req, res, next) => {
       reward: newReward,
     });
   } catch (error) {
-    return next(error);
-  }
-};
-
-export const claimReward: RequestHandler = async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const userId = (req.user as JwtPayload)._id;
-    const { publicKey } = req.body;
-    if (!publicKey) {
-      return res.status(400).json({ success: false, message: 'publicKey address is required' });
-    }
-
-    console.log(userId)
-    const claimer = await User.findById(userId);
-    if (!claimer || !claimer.twitterId || claimer.verified === false) {
-      return res
-        .status(404)
-        .json({ error: 'User should have twitterId and be verified' });
-    }
-    const reward = await Reward.findOne({
-      userId,
-      isClaimed: false,
-    });
-
-    console.log(reward)
-    if (!reward) {
-      return res
-        .status(404)
-        .json({ error: 'Reward not found or already claimed' });
-    }
-    const result = await claimUSDC(publicKey);
-
-    reward.isClaimed = true;
-    reward.claimedAt = new Date();
-    const notification = new Notification({
-      userId,
-      message:
-        'Congratulations, you have successfully received 10USDC as a reward for the assessment',
-      type: 'reward-claimed',
-    });
-
-    await notification.save({ session });
-    console.log(notification)
-    const io = getSocketIO();
-
-    await reward.save({ session });
-    await User.findByIdAndUpdate(
-      userId,
-      {
-        $inc: { totalRewardsEarned: 10 },
-      },
-      { session },
-    );
-
-    io.to(userId).emit('notification', notification);
-
-    await session.commitTransaction();
-    session.endSession();
-    return res
-      .status(201)
-      .json(result);
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return next(error);
   }
 };

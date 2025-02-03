@@ -184,7 +184,6 @@ export const getReferrals: RequestHandler = async (req, res) => {
   return res.status(200).json(result);
 };
 
-// API for leaderboard 2
 export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
   try {
     const users = await User.aggregate([

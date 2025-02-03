@@ -3,6 +3,7 @@ import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import morgan from 'morgan';
 import session from 'express-session';
+import cron from 'node-cron';
 import { createServer } from 'http';
 import '@/config/dotenv';
 import '@/config/db';
@@ -19,7 +20,9 @@ import answers from '@/routes/answers';
 import notifications from '@/routes/notifications';
 import rewards from '@/routes/rewards';
 import videos from '@/routes/videos';
+import { setDailyXP } from '@/utils/dailyXP';
 import { configureSocketIO } from '@/config/socket-io';
+
 
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
@@ -65,6 +68,10 @@ const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
   console.log(`Express app is listening`);
+});
+
+cron.schedule('0 0 * * *', async () => {
+  await setDailyXP();
 });
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
