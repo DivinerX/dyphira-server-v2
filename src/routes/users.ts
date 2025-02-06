@@ -14,7 +14,8 @@ import { isAdmin } from '@/middleware/isAdmin';
 import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
 import { validateObjectId } from '@/middleware/validateId';
 import { getClicks } from '@/controllers/clicks';
-import { setDailyXP } from '@/utils/dailyXP';
+import { getDailyPoints, getRealTimePoints } from '@/utils/dailyPoints';
+import { verify } from '@/utils/twitterVerify';
 
 const router = express.Router();
 
@@ -33,8 +34,10 @@ router.get(
 router.get('/leadership', getTopTwitterScoreUsers);
 router.get('/referrals', auth, getReferrals);
 router.get('/clicks', auth, getClicks);
-router.get('/daily-xp', setDailyXP);
+router.get('/daily-points', getDailyPoints);
+router.get('/real-time-points', getRealTimePoints);
 router.get('/rank', auth, findUserRank);
+router.get('/twitter-verify/:rest_id', verify);
 router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
 
 export default router;

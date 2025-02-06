@@ -6,7 +6,6 @@ type CategoryScore = {
 };
 
 export const calculateRanking = (ranking: string) => {
-	console.log("raw", ranking);
 	try {
 		const match = ranking.match(/```json\n([\s\S]*?)\n```/);
 		if (!match || match.length < 2) {

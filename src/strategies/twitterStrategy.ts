@@ -29,11 +29,9 @@ passport.use(
         if (existing) return cb(new Error('This Twitter account is already linked'), null);
         user.twitterId = profile.id;
         const verifyScore = await twitterVerify(profile.id);
-        if (verifyScore.success) {
-          console.log(verifyScore.score, 'verifyScore')
-          user.twitterScore = Number(verifyScore.score)
-          user.verified = Number(verifyScore!.score) > 1000_000;
-        }
+        user.verified = true;
+        user.twitterScore = verifyScore;
+        await user.save();
         if (user.verified) {
           const notification = new Notification({
             userId: userId,
@@ -44,8 +42,6 @@ passport.use(
           const io = getSocketIO();
           io.to(userId).emit('notification', notification);
         }
-        await user.save();
-
         return cb(null, user);
       } catch (error) {
         return cb(error, null);

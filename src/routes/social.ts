@@ -21,13 +21,13 @@ router.get("/facebook", verifyAccessToken, async (req, res, next) => {
 router.get(
   "/facebook/callback",
   passport.authenticate("facebook", {
-    failureRedirect: `${env.CLIENT_BASE_URL}/dashboard?socialAuthFailed=true&provider=facebook`,
+    failureRedirect: `${env.CLIENT_BASE_URL}/assessments?socialAuthFailed=true&provider=facebook`,
     failureMessage: true,
   }),
   (req, res) => {
     console.log(req.authInfo);
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=facebook`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=facebook`,
     );
   },
 );
@@ -44,13 +44,13 @@ router.get("/reddit", verifyAccessToken, async (req, res, next) => {
 router.get(
   "/reddit/callback",
   passport.authenticate("reddit", {
-    failureRedirect: `${env.CLIENT_BASE_URL}/dashboard?socialAuthFailed=true&provider=reddit`,
+    failureRedirect: `${env.CLIENT_BASE_URL}/assessments?socialAuthFailed=true&provider=reddit`,
     failureMessage: true,
   }),
   (req, res) => {
     console.log(req.authInfo);
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=reddit`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=reddit`,
     );
   },
 );
@@ -71,14 +71,14 @@ router.get("/twitter", verifyAccessToken, async (req, res, next) => {
 router.get(
   "/twitter/callback",
   passport.authenticate("twitter", {
-    failureRedirect: `${env.CLIENT_BASE_URL}/dashboard?socialAuthFailed=true&provider=twitter`,
+    failureRedirect: `${env.CLIENT_BASE_URL}/assessments?socialAuthFailed=true&provider=twitter`,
     failureMessage: true,
   }),
   (req, res) => {
     console.log(req.authInfo);
     console.log(res);
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=twitter`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=twitter`,
     );
   },
 );
@@ -95,13 +95,13 @@ router.get("/linkedin", verifyAccessToken, async (req, res, next) => {
 router.get(
   "/linkedin/callback",
   passport.authenticate("linkedin", {
-    failureRedirect: `${env.CLIENT_BASE_URL}/dashboard?socialAuthFailed=true&provider=linkedin`,
+    failureRedirect: `${env.CLIENT_BASE_URL}/assessments?socialAuthFailed=true&provider=linkedin`,
     failureMessage: true,
   }),
   (req, res) => {
     console.log(req.authInfo);
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=linkedin`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=linkedin`,
     );
   },
 );
@@ -118,13 +118,13 @@ router.get("/instagram", verifyAccessToken, async (req, res, next) => {
 router.get(
   "/instagram/callback",
   passport.authenticate("instagram", {
-    failureRedirect: `${env.CLIENT_BASE_URL}/dashboard?socialAuthFailed=true&provider=instagram`,
+    failureRedirect: `${env.CLIENT_BASE_URL}/assessments?socialAuthFailed=true&provider=instagram`,
     failureMessage: true,
   }),
   (req, res) => {
     console.log(req.authInfo);
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=instagram`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=instagram`,
     );
   },
 );
@@ -194,7 +194,7 @@ router.get("/social/worldid/callback", async (req, res) => {
     await user.save();
 
     return res.redirect(
-      `${env.CLIENT_BASE_URL}/dashboard?socialAuthSuccess=true&provider=worldid`,
+      `${env.CLIENT_BASE_URL}/assessments?socialAuthSuccess=true&provider=worldid`,
     );
   } catch (error) {
     console.error(error);

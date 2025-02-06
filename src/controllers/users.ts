@@ -8,9 +8,9 @@ import crypto from 'crypto';
 import { Fund, type IFund } from '@/models/fund';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Click } from '@/models/click';
+import { Points } from '@/models/points';
 
 export const findUsers: RequestHandler = async (_req, res) => {
-  console.log('findUsers');
   const users = await User.find({ role: 'user' }).populate('referredBy').populate('fund').select('-password -__v');
   return res.status(200).json(users);
 };
@@ -21,9 +21,12 @@ export const findCurrentUser: RequestHandler = async (req, res, next) => {
       .select('-password -__v')
       .populate('fund');
 
+    const userPoints = await Points.findOne({ userId: user?._id });
+    const totalPoints = userPoints?.points.reduce((acc, point) => acc + (point.point || 0), 0) || 0;
+    const result = { ...user?.toObject(), points: totalPoints };
     if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.status(200).json(result);
 
-    return res.status(200).json(user);
   } catch (error) {
     return next(error);
   }
@@ -132,14 +135,11 @@ export const findUser: RequestHandler = async (req, res) => {
   const userId = req.params.userId;
   const user = await User.findById(userId).populate('fund').select('-password -__v');
   const referrals = user?.fund?.referrals || [];
-  console.log(referrals);
   let referralUsers: any[] = [];
   if (referrals.length > 0) {
     referralUsers = await Promise.all(referrals.map(async (referral) => User.findById(referral).populate('fund').select('-password -__v')));
-    console.log("referralUsers", referralUsers);
   }
   const result = { ...user?.toObject(), referrals: referralUsers };
-  console.log("user", result);
   return res.status(200).json(result);
 };
 
@@ -156,7 +156,14 @@ export const findUserRank: RequestHandler = async (req, res) => {
     const userId = (req.user as JwtPayload)._id;
     const targetUser = await User.findById(userId).populate('fund').select('-password -__v');
     const users = await User.find({ role: 'user' }).select('-password -__v');
-    const rank = users.filter(user => user.xp > targetUser!.xp).length + 1;
+    const targetUserPoints = await Points.aggregate([
+      { $match: { userId: targetUser?._id } },
+      { $unwind: '$points' },
+      { $group: { _id: '$userId', totalPoints: { $sum: '$points.point' } } }
+    ]);
+    const targetUserPointsTotal = targetUserPoints[0]?.totalPoints || 0;
+    const points = await Points.find({ userId: { $ne: targetUser?._id } }).select('points');
+    const rank = points.filter(point => point.points.reduce((acc, point) => acc + (point.point || 0), 0) > targetUserPointsTotal).length;
     const percentile = (rank / users.length) * 100;
     return res.status(200).json({ rank, percentile });
   } catch (error) {
@@ -184,7 +191,16 @@ export const getReferrals: RequestHandler = async (req, res) => {
   return res.status(200).json(result);
 };
 
-export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
+export const getTopTwitterScoreUsers: RequestHandler = async (req, res) => {
+  type TPeriod = '24h' | '7d' | '30d' | 'all';
+  const period = req.query.period as TPeriod;
+  const sortBy = req.query.sortBy as 'points' | 'xp';
+  const sortby = sortBy === 'points' ? 'points' : 'overallScore';
+  const now = new Date();
+  const periodDate = period === '24h' ? new Date(now.getTime() - 24 * 60 * 60 * 1000) :
+    period === '7d' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) :
+      period === '30d' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) :
+        new Date(0);
   try {
     const users = await User.aggregate([
       { $match: { role: 'user' } },
@@ -193,10 +209,26 @@ export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
           from: 'assessments',
           localField: '_id',
           foreignField: 'userId',
+          pipeline: [
+            {
+              $match: {
+                updatedAt: { $gte: periodDate }
+              }
+            }
+          ],
           as: 'assessments'
         }
       },
+      {
+        $lookup: {
+          from: 'points',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'pointsData',
+        }
+      },
       { $unwind: { path: '$assessments', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$pointsData', preserveNullAndEmptyArrays: true } },
       {
         $group: {
           _id: '$fund',
@@ -204,16 +236,30 @@ export const getTopTwitterScoreUsers: RequestHandler = async (_req, res) => {
           username: { $first: '$username' },
           twitterScore: { $first: '$twitterScore' },
           twitterId: { $first: '$twitterId' },
-          xp: { $first: '$xp' }
+          points: {
+            $sum: {
+              $reduce: {
+                input: {
+                  $filter: {
+                    input: '$pointsData.points',
+                    as: 'point',
+                    cond: { $gte: ['$$point.date', periodDate] }
+                  }
+                },
+                initialValue: 0,
+                in: { $add: ['$$value', '$$this.point'] }
+              }
+            }
+          }
         }
       },
-      { $sort: { overallScore: -1 } },
+      { $sort: { [sortby]: -1 } },
       {
         $project: {
           _id: 1,
           username: 1,
           twitterScore: 1,
-          xp: 1,
+          points: 1,
           overallScore: 1,
           twitterId: 1
         }

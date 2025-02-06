@@ -20,9 +20,8 @@ import answers from '@/routes/answers';
 import notifications from '@/routes/notifications';
 import rewards from '@/routes/rewards';
 import videos from '@/routes/videos';
-import { setDailyXP } from '@/utils/dailyXP';
+import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
 import { configureSocketIO } from '@/config/socket-io';
-
 
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
@@ -71,8 +70,12 @@ server.listen(port, () => {
 });
 
 cron.schedule('0 0 * * *', async () => {
-  await setDailyXP();
+  await setDailyPoints();
 });
+
+setInterval(async () => {
+  await setRealTimePoints();
+}, 14.4 * 60 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));

@@ -12,8 +12,6 @@ export const findRewards: RequestHandler = async (req, res, next) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const totalRewardsEarned = user.totalRewardsEarned;
-
     let claimableRewards = 0;
     let referralEarnings = 0;
     if (user.verified === true) {
@@ -41,7 +39,7 @@ export const findRewards: RequestHandler = async (req, res, next) => {
       referralEarnings = referralEarningsResult[0]?.referralEarnings || 0;
     }
 
-    return res.status(200).json({ totalRewardsEarned, claimableRewards, referralEarnings });
+    return res.status(200).json({ claimableRewards, referralEarnings });
   } catch (error) {
     return next(error);
   }

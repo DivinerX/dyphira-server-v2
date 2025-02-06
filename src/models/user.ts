@@ -17,7 +17,6 @@ export interface IUser {
   verified: boolean;
   loginAttempts: number;
   lockUntil: Date | null;
-  totalRewardsEarned: number;
 
   referredBy?: string;
   fund?: any;
@@ -40,8 +39,8 @@ export interface IUser {
   linkedinId?: string;
   instagramId?: string;
   worldidId?: string;
-  xp: number;
 }
+
 
 const userSchema = new Schema<IUser>(
   {
@@ -81,10 +80,6 @@ const userSchema = new Schema<IUser>(
     lockUntil: {
       type: Date,
     },
-    totalRewardsEarned: {
-      type: Number,
-      default: 0,
-    },
 
     referredBy: {
       type: Schema.Types.ObjectId,
@@ -96,10 +91,6 @@ const userSchema = new Schema<IUser>(
       ref: 'Fund',
     },
     twitterScore: {
-      type: Number,
-      default: 0,
-    },
-    xp: {
       type: Number,
       default: 0,
     },
