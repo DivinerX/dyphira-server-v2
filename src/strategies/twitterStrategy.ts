@@ -28,7 +28,7 @@ passport.use(
         const existing = await User.findOne({ twitterId: profile.id });
         if (existing) return cb(new Error('This Twitter account is already linked'), null);
         user.twitterId = profile.id;
-        const verifyScore = await twitterVerify(profile.id);
+        const verifyScore = await twitterVerify(profile.screenName);
         user.verified = true;
         user.twitterScore = verifyScore;
         await user.save();

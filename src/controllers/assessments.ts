@@ -8,6 +8,7 @@ import { Assessment, validateAssessment } from '@/models/assessment';
 import { Notification } from '@/models/notification';
 import { Question } from '@/models/question';
 import { Section } from '@/models/section';
+import { User } from '@/models/user';
 import { addProcessAssessmentJob } from '@/queues/processAssessmentQueue';
 import { calculateRanking } from '@/utils/calculateRanking';
 import {
@@ -200,7 +201,6 @@ export const findCompletedAssessmentsCount: RequestHandler = async (
       userId,
       status: 'completed',
     });
-
     res.json({ completedAssessmentsCount });
   } catch (error) {
     return next(error);
@@ -262,47 +262,37 @@ export const findAUsersAssessment: RequestHandler = async (req, res) => {
 };
 
 export const findAverageScore: RequestHandler = async (_req, res) => {
-  const assessments = await Assessment.find();
+  const assessments = await Assessment.find({ status: 'completed' });
   const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
+  console.log(parsedDatas);
   const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
   const accScoreList = scoreList.reduce((acc, curr) => {
     return {
-      confidence: acc.confidence + getScore(curr, "Confidence"),
-      knowledgeability: acc.knowledgeability + getScore(curr, "Knowledgeability"),
-      determination: acc.determination + getScore(curr, "Determination"),
+      IQ: acc.IQ + getScore(curr, "IQ"),
       evangelism: acc.evangelism + getScore(curr, "Evangelism"),
-      workEthic: acc.workEthic + getScore(curr, "Work Ethic"),
+      determination: acc.determination + getScore(curr, "Determination"),
+      effectiveness: acc.effectiveness + getScore(curr, "Effectiveness"),
       vision: acc.vision + getScore(curr, "Vision"),
-      interests: acc.interests + getScore(curr, "Interests"),
-      pastWorkQuality: acc.pastWorkQuality + getScore(curr, "Past Work Quality"),
-      intelligence: acc.intelligence + getScore(curr, "Intelligence"),
-      personality: acc.personality + getScore(curr, "Personality"),
-      horsepower: acc.horsepower + getScore(curr, "Horsepower"),
-      hustle: acc.hustle + getScore(curr, "Hustle"),
-      curiosity: acc.curiosity + getScore(curr, "Curiosity"),
-      focus: acc.focus + getScore(curr, "Focus"),
-      ferocity: acc.ferocity + getScore(curr, "Ferocity"),
     };
   }, {
-    confidence: 0,
-    knowledgeability: 0,
-    determination: 0,
+    IQ: 0,
     evangelism: 0,
-    workEthic: 0,
+    determination: 0,
+    effectiveness: 0,
     vision: 0,
-    interests: 0,
-    pastWorkQuality: 0,
-    intelligence: 0,
-    personality: 0,
-    horsepower: 0,
-    hustle: 0,
-    curiosity: 0,
-    focus: 0,
-    ferocity: 0,
   });
+  const users = await User.find({ role: 'user', twitterScore: { $ne: null } });
+  const averageSocialScore = users.reduce((acc, user) => {
+    acc += user?.twitterScore || 0;
+    return acc;
+  }, 0) / users.length;
   const avgScoreList = Object.fromEntries(Object.entries(accScoreList).map(([key, value]) => [key, value / assessments.length]));
-  return res.status(200).json(avgScoreList);
+  return res.status(200).json({
+    ...avgScoreList,
+    socialCapital: averageSocialScore,
+  });
 };
+
 
 export const findAssessmentDetails: RequestHandler = async (req, res, next) => {
   try {

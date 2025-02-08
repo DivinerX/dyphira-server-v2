@@ -101,7 +101,7 @@ export const setDailyPoints = async () => {
 
 export const setRealTimePoints = async () => {
   try {
-    const points = await Points.aggregate([
+    await Points.aggregate([
       {
         $addFields: {
           points: {
