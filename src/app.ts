@@ -72,10 +72,11 @@ server.listen(port, () => {
 cron.schedule('0 0 * * *', async () => {
   await setDailyPoints();
 });
+// setDailyPoints();
 
 setInterval(async () => {
   await setRealTimePoints();
-}, 14.4 * 60 * 60 * 1000);
+}, 14.4 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));

@@ -17,6 +17,9 @@ export interface IUser {
   verified: boolean;
   loginAttempts: number;
   lockUntil: Date | null;
+  avatar?: string;
+  ip?: string;
+  clicks?: number;
 
   referredBy?: string;
   fund?: any;
@@ -79,6 +82,12 @@ const userSchema = new Schema<IUser>(
     },
     lockUntil: {
       type: Date,
+    },
+    ip: {
+      type: String,
+    },
+    avatar: {
+      type: String,
     },
 
     referredBy: {

@@ -9,13 +9,16 @@ import {
   getTopTwitterScoreUsers,
   getReferrals,
   findUserRank,
+  updateUser,
+  getUserReferralPoints,
 } from '@/controllers/users';
+import { upload } from '@/config/multer';
 import { isAdmin } from '@/middleware/isAdmin';
 import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
 import { validateObjectId } from '@/middleware/validateId';
-import { getClicks } from '@/controllers/clicks';
 import { getDailyPoints, getRealTimePoints } from '@/utils/dailyPoints';
 import { verify } from '@/utils/twitterVerify';
+import { getClicks } from '@/controllers/clicks';
 
 const router = express.Router();
 
@@ -38,6 +41,8 @@ router.get('/daily-points', getDailyPoints);
 router.get('/real-time-points', getRealTimePoints);
 router.get('/rank', auth, findUserRank);
 router.get('/twitter-verify/:rest_id', verify);
-router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
+router.get('/referral-points', auth, getUserReferralPoints);
 
+router.put('/', auth, upload.single('avatar'), updateUser);
+router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
 export default router;

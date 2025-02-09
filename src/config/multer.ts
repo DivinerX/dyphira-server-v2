@@ -10,8 +10,6 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// });
-
 const FILE_TYPES = ['video/mp4', 'video/webm'];
 
 const s3 = new S3Client({

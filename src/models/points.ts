@@ -11,6 +11,10 @@ const pointsSchema = new mongoose.Schema({
     type: [{
       date: Date,
       point: Number,
+      type: {
+        type: String,
+        enum: ['daily', 'talent', 'referral'],
+      },
     }],
     default: [],
   }

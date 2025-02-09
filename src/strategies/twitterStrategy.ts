@@ -17,7 +17,7 @@ passport.use(
     },
     async function (req, _accessToken, _refreshToken, profile, cb) {
       console.log(profile, 'query', req.query, req.session);
-
+      console.log("username", profile.username);
       try {
         const userId = req.session?.userId;
 
@@ -28,7 +28,7 @@ passport.use(
         const existing = await User.findOne({ twitterId: profile.id });
         if (existing) return cb(new Error('This Twitter account is already linked'), null);
         user.twitterId = profile.id;
-        const verifyScore = await twitterVerify(profile.screenName);
+        const verifyScore = await twitterVerify(profile.username);
         user.verified = true;
         user.twitterScore = verifyScore;
         await user.save();

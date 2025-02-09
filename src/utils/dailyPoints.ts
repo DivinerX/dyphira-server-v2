@@ -65,19 +65,19 @@ export const setDailyPoints = async () => {
       if (index < 10) {
         const findedPoint = await Points.findOne({ userId: user._id });
         if (findedPoint) {
-          findedPoint.points.push({ date: new Date(), point: 4000 });
+          findedPoint.points.push({ date: new Date(), point: 4000, type: 'talent' });
           await findedPoint.save();
         } else {
-          const newPoint = new Points({ userId: user._id, points: [{ date: new Date(), point: 4000 }] });
+          const newPoint = new Points({ userId: user._id, points: [{ date: new Date(), point: 4000, type: 'talent' }] });
           await newPoint.save();
         }
       } else {
         const findedPoint = await Points.findOne({ userId: user._id });
         if (findedPoint) {
-          findedPoint.points.push({ date: new Date(), point: 500 });
+          findedPoint.points.push({ date: new Date(), point: 500, type: 'talent' });
           await findedPoint.save();
         } else {
-          const newPoint = new Points({ userId: user._id, points: [{ date: new Date(), point: 500 }] });
+          const newPoint = new Points({ userId: user._id, points: [{ date: new Date(), point: 500, type: 'talent' }] });
           await newPoint.save();
         }
       }
@@ -86,10 +86,10 @@ export const setDailyPoints = async () => {
     await Promise.all(referrers.map(async (referrer) => {
       const findedPoint = await Points.findOne({ userId: referrer });
       if (findedPoint) {
-        findedPoint.points.push({ date: new Date(), point: referralScore });
+        findedPoint.points.push({ date: new Date(), point: referralScore, type: 'referral' });
         await findedPoint.save();
       } else {
-        const newPoint = new Points({ userId: referrer, points: [{ date: new Date(), point: referralScore }] });
+        const newPoint = new Points({ userId: referrer, points: [{ date: new Date(), point: referralScore, type: 'referral' }] });
         await newPoint.save();
       }
     }));
@@ -109,7 +109,8 @@ export const setRealTimePoints = async () => {
               "$points",
               [{
                 date: new Date(),
-                point: 1
+                point: 1,
+                type: 'daily'
               }]
             ]
           }

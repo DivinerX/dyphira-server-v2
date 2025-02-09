@@ -20,7 +20,7 @@ import {
 import type { RequestHandler } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 
-interface MulterS3File extends Express.Multer.File {
+export interface MulterS3File extends Express.Multer.File {
   location: string;
   key: string;
   bucket: string;
@@ -264,7 +264,6 @@ export const findAUsersAssessment: RequestHandler = async (req, res) => {
 export const findAverageScore: RequestHandler = async (_req, res) => {
   const assessments = await Assessment.find({ status: 'completed' });
   const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
-  console.log(parsedDatas);
   const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
   const accScoreList = scoreList.reduce((acc, curr) => {
     return {

@@ -1,4 +1,4 @@
-const points = {
+{
   "jessi_cata": 100,
   "MarioNawfal": 77,
   "St_Rev": 69,
@@ -1334,13 +1334,3 @@ const points = {
   "opinion": 1,
   "HenryEOliver": 1
 }
-
-export const twitterVerify = async (screenName: string) => {
-	const userPoints = points[screenName] || 0;
-	return userPoints;
-};
-
-export const verify = async (req, res) => {
-	const points = await twitterVerify(req.params.rest_id);
-	res.status(200).json({ points });
-};

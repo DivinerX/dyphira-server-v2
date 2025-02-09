@@ -9,6 +9,7 @@ import { Fund, type IFund } from '@/models/fund';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Click } from '@/models/click';
 import { Points } from '@/models/points';
+import { MulterS3File } from './assessments';
 
 export const findUsers: RequestHandler = async (_req, res) => {
   const users = await User.find({ role: 'user' }).populate('referredBy').populate('fund').select('-password -__v');
@@ -176,18 +177,14 @@ export const getReferrals: RequestHandler = async (req, res) => {
   const user = await User.findById(userId).populate('fund').select('-password -__v');
   const referrals = user?.fund?.referrals || [];
   let referralNotifications: any[] = [];
-  console.log(referrals);
   let referralUsers: any[] = [];
   if (referrals.length > 0) {
     referralUsers = await Promise.all(referrals.map(async (referral) => User.findById(referral).populate('fund').select('-password -__v')));
-    console.log("referralUsers", referralUsers);
   }
   if (referralUsers.length > 0) {
     referralNotifications = await Notification.find({ userId: { $in: referrals } }).populate('userId', 'username email');
-    console.log("referralNotifications", referralNotifications);
   }
   const result = { ...user?.toObject(), referrals: referralUsers, notifications: referralNotifications };
-  console.log("user", result);
   return res.status(200).json(result);
 };
 
@@ -270,6 +267,45 @@ export const getTopTwitterScoreUsers: RequestHandler = async (req, res) => {
     return res.status(500).json({ message: 'Error fetching top users', error });
   }
 };
+
+export const getUserReferralPoints: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req.user as JwtPayload)._id;
+    const userPoints = await Points.findOne({ userId });
+    const totalAccumulatedPoints = userPoints?.points.filter(point => point.type === 'referral').reduce((acc, point) => acc + (point.point || 0), 0);
+    const weeklyAccumulatedPoints = userPoints?.points.filter(point => point.type === 'referral' && point.date && point.date > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).reduce((acc, point) => acc + (point.point || 0), 0);
+    const weeklyPoints = userPoints?.points.filter(point => point.type === 'referral' && point.date && point.date > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+    console.log(weeklyPoints)
+    return res.status(200).json({ totalAccumulatedPoints, weeklyAccumulatedPoints, weeklyPoints });
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: 'Error fetching referral points', error: err });
+  }
+};
+
+export const updateUser: RequestHandler = async (req, res) => {
+  const userId = (req.user as JwtPayload)._id;
+  const data = req.body;
+  const avatar = req.file ? (req.file as MulterS3File).location : undefined;
+  const user = await User.findById(userId).select('-password -__v').populate('fund');
+  if (!user) return res.status(404).json({ message: 'User not found' });
+  user.username = data.username;
+  user.email = data.email;
+  if (avatar) {
+    user.avatar = avatar;
+  }
+  await user.save();
+  return res.status(200).json(user);
+};
+
+// export const addClick: RequestHandler = async (req, res) => {
+//   const userId = (req.user as JwtPayload)._id;
+//   const user = await User.findById(userId);
+//   if (!user) return res.status(404).json({ message: 'User not found' });
+//   user.clicks = (user.clicks || 0) + 1;
+//   await user.save();
+//   return res.status(200).json(user);
+// };
 
 function generateReferralCode(length = 12) {
   const chars =
