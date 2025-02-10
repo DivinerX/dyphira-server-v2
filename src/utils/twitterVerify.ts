@@ -1332,7 +1332,8 @@ const points = {
   "ben_golub": 1,
   "business": 1,
   "opinion": 1,
-  "HenryEOliver": 1
+  "HenryEOliver": 1,
+  "LucasCa62273331": 2
 }
 
 export const twitterVerify = async (screenName: string) => {

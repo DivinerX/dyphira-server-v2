@@ -280,7 +280,7 @@ export const findAverageScore: RequestHandler = async (_req, res) => {
     effectiveness: 0,
     vision: 0,
   });
-  const users = await User.find({ role: 'user', twitterScore: { $ne: null } });
+  const users = await User.find({ role: 'user', verified: true });
   const averageSocialScore = users.reduce((acc, user) => {
     acc += user?.twitterScore || 0;
     return acc;
@@ -292,6 +292,35 @@ export const findAverageScore: RequestHandler = async (_req, res) => {
   });
 };
 
+export const findUserScore: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req.user as JwtPayload)._id;
+    const user = await User.findById(userId);
+    console.log(user)
+    const assessments = await Assessment.find({ status: 'completed', userId });
+    const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
+    const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
+    const accScoreList = scoreList.reduce((acc, curr) => {
+      return {
+        IQ: acc.IQ + getScore(curr, "IQ"),
+        evangelism: acc.evangelism + getScore(curr, "Evangelism"),
+        determination: acc.determination + getScore(curr, "Determination"),
+        effectiveness: acc.effectiveness + getScore(curr, "Effectiveness"),
+        vision: acc.vision + getScore(curr, "Vision"),
+      };
+    }, {
+      IQ: 0,
+      evangelism: 0,
+      determination: 0,
+      effectiveness: 0,
+      vision: 0,
+    });
+    return res.status(200).json({ ...accScoreList, socialCapital: user?.twitterScore || 0 });
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: 'Error fetching user score' });
+  }
+};
 
 export const findAssessmentDetails: RequestHandler = async (req, res, next) => {
   try {

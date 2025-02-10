@@ -176,10 +176,45 @@ export const getReferrals: RequestHandler = async (req, res) => {
   const userId = (req.user as JwtPayload)._id;
   const user = await User.findById(userId).populate('fund').select('-password -__v');
   const referrals = user?.fund?.referrals || [];
+  console.log(referrals)
   let referralNotifications: any[] = [];
   let referralUsers: any[] = [];
   if (referrals.length > 0) {
-    referralUsers = await Promise.all(referrals.map(async (referral) => User.findById(referral).populate('fund').select('-password -__v')));
+    // referralUsers = await Promise.all(referrals.map(async (referral) => User.findById(referral).populate('fund').select('-password -__v')));
+    referralUsers = await User.aggregate([
+      { $match: { _id: { $in: referrals } } },
+      { $lookup: { from: 'points', localField: '_id', foreignField: 'userId', as: 'pointsData' } },
+      { $unwind: { path: '$pointsData', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: '$_id',
+          username: { $first: '$username' },
+          twitterScore: { $first: '$twitterScore' },
+          twitterId: { $first: '$twitterId' },
+          createdAt: { $first: '$createdAt' },
+          pointsEarned: {
+            $sum: {
+              $reduce: {
+
+                input: '$pointsData.points',
+                initialValue: 0,
+                in: { $add: ['$$value', '$$this.point'] }
+              }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          username: 1,
+          twitterScore: 1,
+          twitterId: 1,
+          pointsEarned: 1,
+          createdAt: 1
+        }
+      }
+    ]);
   }
   if (referralUsers.length > 0) {
     referralNotifications = await Notification.find({ userId: { $in: referrals } }).populate('userId', 'username email');
@@ -187,6 +222,7 @@ export const getReferrals: RequestHandler = async (req, res) => {
   const result = { ...user?.toObject(), referrals: referralUsers, notifications: referralNotifications };
   return res.status(200).json(result);
 };
+
 
 export const getTopTwitterScoreUsers: RequestHandler = async (req, res) => {
   type TPeriod = '24h' | '7d' | '30d' | 'all';
@@ -298,14 +334,30 @@ export const updateUser: RequestHandler = async (req, res) => {
   return res.status(200).json(user);
 };
 
-// export const addClick: RequestHandler = async (req, res) => {
-//   const userId = (req.user as JwtPayload)._id;
-//   const user = await User.findById(userId);
-//   if (!user) return res.status(404).json({ message: 'User not found' });
-//   user.clicks = (user.clicks || 0) + 1;
-//   await user.save();
-//   return res.status(200).json(user);
-// };
+export const addClick: RequestHandler = async (req, res) => {
+  try {
+    const { referralCode } = req.body;
+    const fund = await Fund.findOne({ referralCode });
+    if (!fund) return res.status(404).json({ message: 'Invalid referral code' });
+    
+    let click = await Click.findOne({ referralCode });
+    if (!click) {
+      click = new Click({ referralCode, clicks: [new Date()] });
+    } else {
+      click.clicks = [...click.clicks, new Date()];
+    }
+    await click.save();
+
+    return res.status(200).json({
+      message: 'Click added successfully',
+      clicks: click.clicks.length
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error adding click', error: error });
+  }
+};
+
 
 function generateReferralCode(length = 12) {
   const chars =

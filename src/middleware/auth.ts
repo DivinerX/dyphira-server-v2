@@ -1,15 +1,16 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import type { RequestHandler } from 'express';
+import { User } from '@/models/user';
 
-export const auth: RequestHandler = (req, res, next) => {
+export const auth: RequestHandler = async (req, res, next) => {
   const token =
     req.headers.authorization && req.headers.authorization.split(' ')[1];
   if (!token)
     return res.status(401).json({ error: 'Access denied. No token provided.' });
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     req.user = decoded;
+    await User.findByIdAndUpdate((req.user as JwtPayload)._id, { ip: req.ip ?? '' });
     return next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -18,7 +19,6 @@ export const auth: RequestHandler = (req, res, next) => {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: 'Malformed token.' });
     }
-
     return next(error);
   }
 };

@@ -14,10 +14,8 @@ export const login: RequestHandler = async (req, res) => {
 
   const isPasswordMatch = user.comparePassword(password);
   if (!isPasswordMatch) {
-    await user.save();
     return res.status(400).json({ password: 'Password does not match.' });
   }
-  await user.save();
 
   return res.json({
     user: {

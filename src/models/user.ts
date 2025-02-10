@@ -19,8 +19,6 @@ export interface IUser {
   lockUntil: Date | null;
   avatar?: string;
   ip?: string;
-  clicks?: number;
-
   referredBy?: string;
   fund?: any;
 

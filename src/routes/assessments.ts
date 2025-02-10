@@ -15,6 +15,7 @@ import {
   findAllAssessments,
   findAUsersAssessment,
   findAverageScore,
+  findUserScore,
 } from '@/controllers/assessments';
 import { isAdmin } from '@/middleware/isAdmin';
 import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
@@ -40,6 +41,7 @@ router.get('/completed-count', auth, findCompletedAssessmentsCount);
 router.get('/last-completion-date', auth, findLastAssessmentCompletionDate);
 router.get('/rank-interview-performance', auth, findAUsersAssessment);
 router.get('/average-score', auth, findAverageScore);
+router.get('/user-score', auth, findUserScore);
 
 router.get('/all', auth, isAdmin, findAllAssessments);
 
