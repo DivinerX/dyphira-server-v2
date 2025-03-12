@@ -22,7 +22,7 @@ import rewards from '@/routes/rewards';
 import videos from '@/routes/videos';
 import clicks from '@/routes/clicks';
 import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
-import { configureSocketIO } from '@/config/socket-io';
+import { configureSocketIO, getSocketIO } from '@/config/socket-io';
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
 
@@ -74,11 +74,11 @@ cron.schedule('0 0 * * *', async () => {
   await setDailyPoints();
 });
 
-// setInterval(async () => {
-//   await setRealTimePoints();
-//   const io = getSocketIO();
-//   io.emit('points-update');
-// }, 14.4 * 60 * 1000);
+  setInterval(async () => {
+    await setRealTimePoints();
+    const io = getSocketIO();
+    io.emit('points-update');
+  }, 14.4 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));
