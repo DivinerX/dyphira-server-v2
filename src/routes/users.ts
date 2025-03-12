@@ -11,13 +11,14 @@ import {
   findUserRank,
   updateUser,
   getUserReferralPoints,
-  addClick,
+  getDashboardFeed,
 } from '@/controllers/users';
 import { upload } from '@/config/multer';
 import { isAdmin } from '@/middleware/isAdmin';
 import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
 import { validateObjectId } from '@/middleware/validateId';
 import { getDailyPoints, getRealTimePoints } from '@/utils/dailyPoints';
+
 import { verify } from '@/utils/twitterVerify';
 import { getClicks } from '@/controllers/clicks';
 
@@ -43,7 +44,7 @@ router.get('/real-time-points', getRealTimePoints);
 router.get('/rank', auth, findUserRank);
 router.get('/twitter-verify/:rest_id', verify);
 router.get('/referral-points', auth, getUserReferralPoints);
-router.post('/referral-code', addClick);
+router.get('/dashboard-feed', getDashboardFeed);
 
 router.put('/', auth, upload.single('avatar'), updateUser);
 router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);

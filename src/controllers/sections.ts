@@ -29,6 +29,7 @@ export const createSection: RequestHandler = async (req, res, next) => {
 export const findSectionQuestions: RequestHandler = async (req, res, next) => {
   try {
     const { sectionId } = req.params;
+    console.log("sectionId", sectionId)
     const questions = await Question.find({ sectionId }).sort('order');
 
     return res.status(200).json(questions);

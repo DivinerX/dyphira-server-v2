@@ -1,6 +1,5 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import type { RequestHandler } from 'express';
-import { User } from '@/models/user';
 
 export const auth: RequestHandler = async (req, res, next) => {
   const token =
@@ -10,7 +9,6 @@ export const auth: RequestHandler = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     req.user = decoded;
-    await User.findByIdAndUpdate((req.user as JwtPayload)._id, { ip: req.ip ?? '' });
     return next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

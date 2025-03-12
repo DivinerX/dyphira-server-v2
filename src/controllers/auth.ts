@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { sendResetPasswordEmail } from '@/utils/sendEmail';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { RefreshToken } from '@/models/refreshToken';
+import { getLocation } from '@/utils/getLocation';
 
 export const login: RequestHandler = async (req, res) => {
   const { email, password } = req.body;
@@ -16,6 +17,14 @@ export const login: RequestHandler = async (req, res) => {
   if (!isPasswordMatch) {
     return res.status(400).json({ password: 'Password does not match.' });
   }
+  const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress)?.toString()?.split(',')[0]?.trim();
+  const ipv4 = ip?.replace(/^::ffff:/, '');
+  const location = await getLocation(ipv4);
+  user.city = location.city ?? '';
+  user.countryCode = location.countryCode ?? '';
+  user.latitude = location.latitude ?? 0;
+  user.longitude = location.longitude ?? 0;
+  await user.save();
 
   return res.json({
     user: {

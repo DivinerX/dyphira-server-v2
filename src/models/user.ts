@@ -21,6 +21,10 @@ export interface IUser {
   ip?: string;
   referredBy?: string;
   fund?: any;
+  city?: string;
+  countryCode?: string;
+  latitude?: number;
+  longitude?: number;
 
   resetPasswordToken: string | undefined;
   resetPasswordExpires?: Date | undefined;
@@ -86,6 +90,18 @@ const userSchema = new Schema<IUser>(
     },
     avatar: {
       type: String,
+    },
+    city: {
+      type: String,
+    },
+    countryCode: {
+      type: String,
+    },
+    latitude: {
+      type: Number,
+    },
+    longitude: {
+      type: Number,
     },
 
     referredBy: {

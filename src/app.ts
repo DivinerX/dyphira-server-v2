@@ -20,9 +20,9 @@ import answers from '@/routes/answers';
 import notifications from '@/routes/notifications';
 import rewards from '@/routes/rewards';
 import videos from '@/routes/videos';
+import clicks from '@/routes/clicks';
 import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
-import { configureSocketIO, getSocketIO } from '@/config/socket-io';
-
+import { configureSocketIO } from '@/config/socket-io';
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
 
@@ -47,6 +47,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/clicks', clicks);
 app.use('/api/v1/users', users);
 app.use('/api/v1/funds', funds);
 app.use('/api/v1/social', social);
@@ -65,20 +66,19 @@ app.get('/healthz', (_, res) => {
 
 const port = process.env.PORT || 5000;
 
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log(`Express app is listening`);
 });
 
 cron.schedule('0 0 * * *', async () => {
   await setDailyPoints();
 });
-// setDailyPoints();
 
-setInterval(async () => {
-  await setRealTimePoints();
-  const io = getSocketIO();
-  io.emit('points-update');
-}, 14.4 * 60 * 1000);
+// setInterval(async () => {
+//   await setRealTimePoints();
+//   const io = getSocketIO();
+//   io.emit('points-update');
+// }, 14.4 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));

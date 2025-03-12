@@ -10,9 +10,87 @@ import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Click } from '@/models/click';
 import { Points } from '@/models/points';
 import { MulterS3File } from './assessments';
+import { getLocation } from '@/utils/getLocation';
 
 export const findUsers: RequestHandler = async (_req, res) => {
-  const users = await User.find({ role: 'user' }).populate('referredBy').populate('fund').select('-password -__v');
+  const users = await User.aggregate([
+    { $match: { role: 'user' } },
+    {
+      $lookup: {
+        from: 'points',
+        localField: '_id',
+        foreignField: 'userId',
+        as: 'pointsData'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'referredBy',
+        foreignField: '_id',
+        as: 'referredBy'
+      }
+    },
+    {
+      $lookup: {
+        from: 'funds',
+        localField: 'fund',
+        foreignField: '_id',
+        as: 'fund'
+      }
+    },
+    {
+      $unwind: { path: '$pointsData', preserveNullAndEmptyArrays: true }
+    },
+    {
+      $unwind: { path: '$referredBy', preserveNullAndEmptyArrays: true }
+    },
+    {
+      $unwind: { path: '$fund', preserveNullAndEmptyArrays: true }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        username: { $first: '$username' },
+        email: { $first: '$email' },
+        role: { $first: '$role' },
+        referredBy: { $first: '$referredBy' },
+        fund: { $first: '$fund' },
+        createdAt: { $first: '$createdAt' },
+        twitterId: { $first: '$twitterId' },
+        xp: { $first: '$twitterScore' },
+        credits: {
+          $sum: {
+            $reduce: {
+              input: '$pointsData.points',
+              initialValue: 0,
+              in: { $add: ['$$value', '$$this.point'] }
+            }
+          }
+        }
+      }
+    },
+    {
+      $sort: {
+        createdAt: -1
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        email: 1,
+        role: 1,
+        referredBy: 1,
+        fund: 1,
+        xp: 1,
+        credits: 1,
+        createdAt: 1,
+        twitterId: 1,
+      }
+    }
+  ]);
+
   return res.status(200).json(users);
 };
 
@@ -75,18 +153,23 @@ export const register: RequestHandler = async (req, res) => {
 
     const newUserId = new Types.ObjectId();
     const newFundId = new Types.ObjectId();
-
+    const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress)?.toString()?.split(',')[0]?.trim();
+    const ipv4 = ip?.replace(/^::ffff:/, '');
+    const location = await getLocation(ipv4);
     const newUser = new User({
       _id: newUserId,
       email,
       fund: newFundId,
       referredBy,
       username,
+      ip: ipv4,
+      city: location?.city,
+      countryCode: location?.countryCode,
+      latitude: location?.latitude,
+      longitude: location?.longitude,
     });
-
     const hash = newUser.hashPassword(password);
     newUser.password = hash;
-
     const newFund = new Fund({
       _id: newFundId,
       name: username,
@@ -323,6 +406,7 @@ export const updateUser: RequestHandler = async (req, res) => {
   const userId = (req.user as JwtPayload)._id;
   const data = req.body;
   const avatar = req.file ? (req.file as MulterS3File).location : undefined;
+  console.log(req.file)
   const user = await User.findById(userId).select('-password -__v').populate('fund');
   if (!user) return res.status(404).json({ message: 'User not found' });
   user.username = data.username;
@@ -334,30 +418,14 @@ export const updateUser: RequestHandler = async (req, res) => {
   return res.status(200).json(user);
 };
 
-export const addClick: RequestHandler = async (req, res) => {
+export const getDashboardFeed: RequestHandler = async (_req, res) => {
   try {
-    const { referralCode } = req.body;
-    const fund = await Fund.findOne({ referralCode });
-    if (!fund) return res.status(404).json({ message: 'Invalid referral code' });
-    
-    let click = await Click.findOne({ referralCode });
-    if (!click) {
-      click = new Click({ referralCode, clicks: [new Date()] });
-    } else {
-      click.clicks = [...click.clicks, new Date()];
-    }
-    await click.save();
-
-    return res.status(200).json({
-      message: 'Click added successfully',
-      clicks: click.clicks.length
-    });
+    const users = await User.find({ role: 'user' }).select('username avatar ip city countryCode latitude longitude createdAt');
+    return res.status(200).json(users);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error adding click', error: error });
+    return res.status(500).json({ message: 'Error fetching dashboard feed', error });
   }
-};
-
+}
 
 function generateReferralCode(length = 12) {
   const chars =

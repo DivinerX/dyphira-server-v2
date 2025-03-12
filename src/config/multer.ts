@@ -10,8 +10,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const FILE_TYPES = ['video/mp4', 'video/webm'];
-
+const FILE_TYPES = ['video/mp4', 'video/webm', 'image/jpeg', 'image/png', 'image/jpg'];
 const s3 = new S3Client({
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY as string,
@@ -39,6 +38,7 @@ export const upload = multer({
     fileSize: 1024 * 1024 * 200, // 200 MB in bytes 
   },
   fileFilter(_req, file, cb) {
+    console.log("file", file)
     if (FILE_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {

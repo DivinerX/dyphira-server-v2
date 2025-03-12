@@ -101,6 +101,16 @@ export const setDailyPoints = async () => {
 
 export const setRealTimePoints = async () => {
   try {
+    const users = await User.find({ role: 'user' });
+    console.log("users", users.length)
+    await Promise.all(users.map(async (user) => {
+      const findedPoint = await Points.findOne({ userId: user._id });
+      console.log(user._id, findedPoint)
+      if (!findedPoint) {
+        const newPoint = new Points({ userId: user._id, points: [{ date: new Date(), point: 1, type: 'daily' }] });
+        await newPoint.save();
+      }
+    }));
     await Points.aggregate([
       {
         $addFields: {
