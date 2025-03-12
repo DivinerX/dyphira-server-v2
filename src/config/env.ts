@@ -18,7 +18,6 @@ const envSchema = z.object({
   SMTP_SERVICE: z.string(),
   EMAIL_USER: z.string(),
   EMAIL_PASSWORD: z.string(),
-  SERVER_WALLET_KEY: z.string(),
   AWS_ACCESS_KEY: z.string(),
   AWS_SECRET_KEY: z.string(),
 
