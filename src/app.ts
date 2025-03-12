@@ -64,10 +64,10 @@ app.get('/healthz', (_, res) => {
   res.send('I am healthy!');
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 
 server.listen(port, async () => {
-  console.log(`Express app is listening`);
+  console.log(`Express app is listening on port ${port}`);
 });
 
 cron.schedule('0 0 * * *', async () => {
