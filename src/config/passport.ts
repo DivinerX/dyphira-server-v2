@@ -1,9 +1,9 @@
 import passport from 'passport';
-import '@/strategies/facebookStrategy';
+// import '@/strategies/facebookStrategy';
 import '@/strategies/twitterStrategy';
 // import '@/strategies/redditStrategy';
-import '@/strategies/linkedinStrategy';
-import '@/strategies/instagramStrategy';
+// import '@/strategies/linkedinStrategy';
+// import '@/strategies/instagramStrategy';
 import type { IUser } from '../models/user';
 
 passport.serializeUser((user, done) => {
