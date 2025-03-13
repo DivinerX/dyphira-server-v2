@@ -238,7 +238,7 @@ export const findAllAssessments: RequestHandler = async (_, res) => {
 
 export const findAverageScore: RequestHandler = async (_, res) => {
   const assessments = await Assessment.find({});
-  const user = await User.find({ twitterScore: { $exists: true, $gt: 0 } }).select('twitterScore');
+  const user = await User.find({ verified: true }).select('twitterScore');
   const totalUserXp = user.reduce((acc, user) => acc + (user.twitterScore || 0), 0);
   const averageXp = totalUserXp / user.length;
   if (assessments.length === 0) {
@@ -292,7 +292,7 @@ export const findUserScore: RequestHandler = async (req, res) => {
     vision: totalScore.vision / assessments.length,
     socialCapital: user!.twitterScore || 0,
   }
-  
+
   return res.status(200).json({ ...averageScore });
 };
 
