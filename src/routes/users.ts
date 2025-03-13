@@ -15,7 +15,6 @@ import {
 } from '@/controllers/users';
 import { upload } from '@/config/multer';
 import { isAdmin } from '@/middleware/isAdmin';
-import { isAdminOrReferredFund } from '@/middleware/isAdminOrReferredFund';
 import { validateObjectId } from '@/middleware/validateId';
 import { getDailyPoints, getRealTimePoints } from '@/utils/dailyPoints';
 
@@ -24,18 +23,9 @@ import { getClicks } from '@/controllers/clicks';
 
 const router = express.Router();
 
-router.get('/me', auth, findCurrentUser);
-router.post('/', register);
-
 router.get('/', auth, isAdmin, findUsers);
-router.get(
-  '/:userId/assessments',
-  validateObjectId('userId'),
-  auth,
-  isAdminOrReferredFund,
-  findUserAssessments,
-);
 
+router.get('/me', auth, findCurrentUser);
 router.get('/leadership', getTopTwitterScoreUsers);
 router.get('/referrals', auth, getReferrals);
 router.get('/clicks', auth, getClicks);
@@ -46,6 +36,14 @@ router.get('/twitter-verify/:rest_id', verify);
 router.get('/referral-points', auth, getUserReferralPoints);
 router.get('/dashboard-feed', getDashboardFeed);
 
-router.put('/', auth, upload.single('avatar'), updateUser);
 router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
+router.get(
+  '/:userId/assessments',
+  validateObjectId('userId'),
+  auth,
+  isAdmin,
+  findUserAssessments,
+);
+router.post('/', register);
+router.put('/', auth, upload.single('avatar'), updateUser);
 export default router;

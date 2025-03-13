@@ -3,14 +3,9 @@ import {
   MAX_ASSESSMENT_DURATION,
 } from '@/config/constants';
 import { getSocketIO } from '@/config/socket-io';
-import { Answer } from '@/models/answer';
 import { Assessment, validateAssessment } from '@/models/assessment';
 import { Notification } from '@/models/notification';
-import { Question } from '@/models/question';
-import { Section } from '@/models/section';
 import { User } from '@/models/user';
-import { addProcessAssessmentJob } from '@/queues/processAssessmentQueue';
-import { calculateRanking } from '@/utils/calculateRanking';
 import {
   addMonths,
   differenceInSeconds,
@@ -153,7 +148,6 @@ export const uploadAssessmentVideo: RequestHandler = async (req, res, next) => {
       return res.status(404).json({ message: 'Assessment not found' });
     }
 
-    await addProcessAssessmentJob(userId, assessment.videoUrl, assessment._id);
     return res.status(201).json(assessment);
   } catch (error) {
     return next(error);
@@ -242,14 +236,64 @@ export const findAllAssessments: RequestHandler = async (_, res) => {
   return res.status(200).json(assessments);
 };
 
-export const findAssessmentAnswers: RequestHandler = async (req, res) => {
-  const answers = await Answer.find({
-    assessmentId: req.params.assessmentId,
-  })
-    .sort({ createdAt: 1 })
-    .populate('questionId');
+export const findAverageScore: RequestHandler = async (_, res) => {
+  const assessments = await Assessment.find({});
+  const user = await User.find({ twitterScore: { $exists: true, $gt: 0 } }).select('twitterScore');
+  const totalUserXp = user.reduce((acc, user) => acc + (user.twitterScore || 0), 0);
+  const averageXp = totalUserXp / user.length;
+  if (assessments.length === 0) {
+    return res.status(200).json({
+      IQ: 0,
+      evangelism: 0,
+      determination: 0,
+      effectiveness: 0,
+      vision: 0,
+      socialCapital: averageXp,
+    });
+  }
+  const totalScore = assessments.reduce((acc, assessment) => {
+    return {
+      IQ: acc.IQ + assessment.score.IQ,
+      evangelism: acc.evangelism + assessment.score.evangelism,
+      determination: acc.determination + assessment.score.determination,
+      effectiveness: acc.effectiveness + assessment.score.effectiveness,
+      vision: acc.vision + assessment.score.vision,
+    };
+  }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
+  const averageScore = {
+    IQ: totalScore.IQ / assessments.length,
+    evangelism: totalScore.evangelism / assessments.length,
+    determination: totalScore.determination / assessments.length,
+    effectiveness: totalScore.effectiveness / assessments.length,
+    vision: totalScore.vision / assessments.length,
+    socialCapital: averageXp,
+  };
+  return res.status(200).json({ ...averageScore });
+};
 
-  return res.status(200).json(answers);
+export const findUserScore: RequestHandler = async (req, res) => {
+  const userId = (req.user as JwtPayload)._id;
+  const user = await User.findById(userId).select('twitterScore');
+  const assessments = await Assessment.find({ userId });
+  const totalScore = assessments.reduce((acc, assessment) => {
+    return {
+      IQ: acc.IQ + assessment.score.IQ,
+      evangelism: acc.evangelism + assessment.score.evangelism,
+      determination: acc.determination + assessment.score.determination,
+      effectiveness: acc.effectiveness + assessment.score.effectiveness,
+      vision: acc.vision + assessment.score.vision,
+    };
+  }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
+  const averageScore = {
+    IQ: totalScore.IQ / assessments.length,
+    evangelism: totalScore.evangelism / assessments.length,
+    determination: totalScore.determination / assessments.length,
+    effectiveness: totalScore.effectiveness / assessments.length,
+    vision: totalScore.vision / assessments.length,
+    socialCapital: user!.twitterScore || 0,
+  }
+  
+  return res.status(200).json({ ...averageScore });
 };
 
 export const findAUsersAssessment: RequestHandler = async (req, res) => {
@@ -261,88 +305,20 @@ export const findAUsersAssessment: RequestHandler = async (req, res) => {
   return res.status(200).json(assessment);
 };
 
-export const findAverageScore: RequestHandler = async (_req, res) => {
-  const assessments = await Assessment.find({ status: 'completed' });
-  const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
-  const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
-  const accScoreList = scoreList.reduce((acc, curr) => {
-    return {
-      IQ: acc.IQ + getScore(curr, "IQ"),
-      evangelism: acc.evangelism + getScore(curr, "Evangelism"),
-      determination: acc.determination + getScore(curr, "Determination"),
-      effectiveness: acc.effectiveness + getScore(curr, "Effectiveness"),
-      vision: acc.vision + getScore(curr, "Vision"),
-    };
-  }, {
-    IQ: 0,
-    evangelism: 0,
-    determination: 0,
-    effectiveness: 0,
-    vision: 0,
-  });
-  const users = await User.find({ role: 'user', verified: true });
-  const averageSocialScore = users.reduce((acc, user) => {
-    acc += user?.twitterScore || 0;
-    return acc;
-  }, 0) / users.length;
-  const avgScoreList = Object.fromEntries(Object.entries(accScoreList).map(([key, value]) => [key, value / assessments.length]));
-  return res.status(200).json({
-    ...avgScoreList,
-    socialCapital: averageSocialScore,
-  });
-};
-
-export const findUserScore: RequestHandler = async (req, res) => {
-  try {
-    const userId = (req.user as JwtPayload)._id;
-    const user = await User.findById(userId);
-    console.log(user)
-    const assessments = await Assessment.find({ status: 'completed', userId });
-    const parsedDatas = assessments.map((assessment) => calculateRanking(assessment.ranking));
-    const scoreList = parsedDatas.map((parsedData) => parsedData.parsedData);
-    const accScoreList = scoreList.reduce((acc, curr) => {
-      return {
-        IQ: acc.IQ + getScore(curr, "IQ"),
-        evangelism: acc.evangelism + getScore(curr, "Evangelism"),
-        determination: acc.determination + getScore(curr, "Determination"),
-        effectiveness: acc.effectiveness + getScore(curr, "Effectiveness"),
-        vision: acc.vision + getScore(curr, "Vision"),
-      };
-    }, {
-      IQ: 0,
-      evangelism: 0,
-      determination: 0,
-      effectiveness: 0,
-      vision: 0,
-    });
-    return res.status(200).json({ ...accScoreList, socialCapital: user?.twitterScore || 0 });
-  } catch (err) {
-    console.error(err)
-    return res.status(500).json({ message: 'Error fetching user score' });
-  }
-};
-
-export const findAssessmentDetails: RequestHandler = async (req, res, next) => {
+export const setAssessmentScore: RequestHandler = async (req, res, next) => {
   try {
     const { assessmentId } = req.params;
+    const { score, feedback } = req.body;
     const assessment = await Assessment.findById(assessmentId);
-    const answers = await Answer.find({ assessmentId });
-    const sections = await Section.find();
-    const questions = await Question.find({
-      sectionId: { $in: sections.map((s) => s._id) },
-    });
-
-    res.json({
-      assessment,
-      answers,
-      sections,
-      questions,
-    });
+    if (!assessment) {
+      return res.status(404).json({ message: 'Assessment not found' });
+    }
+    assessment.score = score;
+    assessment.feedback = feedback;
+    await assessment.save();
+    return res.status(200).json(assessment);
   } catch (error) {
-    next(error);
+    return next(error);
   }
-};
+}
 
-const getScore = (jsonScores: any[], scoreName: string) => {
-  return jsonScores.find((score) => score.category.toLowerCase() === scoreName.toLowerCase())?.score || 0;
-};

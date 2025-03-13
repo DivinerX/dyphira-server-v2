@@ -263,7 +263,6 @@ export const getReferrals: RequestHandler = async (req, res) => {
   let referralNotifications: any[] = [];
   let referralUsers: any[] = [];
   if (referrals.length > 0) {
-    // referralUsers = await Promise.all(referrals.map(async (referral) => User.findById(referral).populate('fund').select('-password -__v')));
     referralUsers = await User.aggregate([
       { $match: { _id: { $in: referrals } } },
       { $lookup: { from: 'points', localField: '_id', foreignField: 'userId', as: 'pointsData' } },
@@ -348,7 +347,17 @@ export const getTopTwitterScoreUsers: RequestHandler = async (req, res) => {
       {
         $group: {
           _id: '$fund',
-          overallScore: { $sum: '$assessments.score' },
+          overallScore: { 
+            $avg: {
+              $add: [
+                { $ifNull: ['$assessments.score.IQ', 0] },
+                { $ifNull: ['$assessments.score.evangelism', 0] },
+                { $ifNull: ['$assessments.score.determination', 0] },
+                { $ifNull: ['$assessments.score.effectiveness', 0] },
+                { $ifNull: ['$assessments.score.vision', 0] }
+              ]
+            }
+          },
           username: { $first: '$username' },
           twitterScore: { $first: '$twitterScore' },
           twitterId: { $first: '$twitterId' },

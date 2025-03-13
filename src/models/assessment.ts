@@ -4,6 +4,7 @@ import { z } from 'zod';
 const ASSESSMENT_STATUS = [
   'in-progress',
   'completed',
+  'in_review',
   'timeout',
   'abandoned',
 ] as const;
@@ -22,7 +23,14 @@ export interface IAssessment extends Timestamps {
   audioUrl: string;
   transcript: string;
   ranking: string;
-  score: number;
+  score: {
+    IQ: number;
+    evangelism: number;
+    determination: number;
+    effectiveness: number;
+    vision: number;
+  }
+  feedback: string;
 }
 
 const assessmentSchema = new Schema<IAssessment>(
@@ -65,7 +73,24 @@ const assessmentSchema = new Schema<IAssessment>(
       type: String,
     },
     score: {
-      type: Number,
+      IQ: {
+        type: Number,
+      },
+      evangelism: {
+        type: Number,
+      },
+      determination: {
+        type: Number,
+      },
+      effectiveness: {
+        type: Number,
+      },
+      vision: {
+        type: Number,
+      },
+    },
+    feedback: {
+      type: String,
     },
   },
   { timestamps: true },
