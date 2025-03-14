@@ -308,11 +308,18 @@ export const findAUsersAssessment: RequestHandler = async (req, res) => {
 export const setAssessmentScore: RequestHandler = async (req, res, next) => {
   try {
     const { assessmentId } = req.params;
-    const { score, feedback } = req.body;
+    const { score, feedback, socialCapital } = req.body;
     const assessment = await Assessment.findById(assessmentId);
     if (!assessment) {
       return res.status(404).json({ message: 'Assessment not found' });
     }
+    if (assessment.status === 'in_review') {
+      assessment.status = 'completed';
+      await assessment.save();
+    }
+    const user = await User.findById(assessment.userId);
+    user!.twitterScore = socialCapital;
+    await user!.save();
     assessment.score = score;
     assessment.feedback = feedback;
     await assessment.save();
