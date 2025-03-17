@@ -237,7 +237,7 @@ export const findAllAssessments: RequestHandler = async (_, res) => {
 };
 
 export const findAverageScore: RequestHandler = async (_, res) => {
-  const assessments = await Assessment.find({});
+  const assessments = await Assessment.find({ status: 'completed' });
   const user = await User.find({ verified: true }).select('twitterScore');
   const totalUserXp = user.reduce((acc, user) => acc + (user.twitterScore || 0), 0);
   const averageXp = totalUserXp / user.length;
@@ -251,14 +251,14 @@ export const findAverageScore: RequestHandler = async (_, res) => {
       socialCapital: averageXp,
     });
   }
-  console.log(assessments)
+
   const totalScore = assessments.reduce((acc, assessment) => {
     return {
-      IQ: acc.IQ + assessment.score?.IQ || 0,
-      evangelism: acc.evangelism + assessment.score?.evangelism || 0,
-      determination: acc.determination + assessment.score?.determination || 0,
-      effectiveness: acc.effectiveness + assessment.score?.effectiveness || 0,
-      vision: acc.vision + assessment.score?.vision || 0,
+      IQ: acc.IQ + (assessment.score?.IQ || 0),
+      evangelism: acc.evangelism + (assessment.score?.evangelism || 0),
+      determination: acc.determination + (assessment.score?.determination || 0),
+      effectiveness: acc.effectiveness + (assessment.score?.effectiveness || 0),
+      vision: acc.vision + (assessment.score?.vision || 0),
     };
   }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
   const averageScore = {
@@ -275,14 +275,14 @@ export const findAverageScore: RequestHandler = async (_, res) => {
 export const findUserScore: RequestHandler = async (req, res) => {
   const userId = (req.user as JwtPayload)._id;
   const user = await User.findById(userId).select('twitterScore');
-  const assessments = await Assessment.find({ userId });
+  const assessments = await Assessment.find({ userId, status: 'completed' });
   console.log(assessments)
   if (assessments.length === 0) {
     return res.status(200).json({
       IQ: 0,
       evangelism: 0,
       determination: 0,
-      effectiveness: 0, 
+      effectiveness: 0,
       vision: 0,
       socialCapital: user!.twitterScore || 0,
     });
@@ -290,11 +290,11 @@ export const findUserScore: RequestHandler = async (req, res) => {
 
   const totalScore = assessments.reduce((acc, assessment) => {
     return {
-      IQ: acc.IQ + assessment.score?.IQ || 0,
-      evangelism: acc.evangelism + assessment.score?.evangelism || 0,
-      determination: acc.determination + assessment.score?.determination || 0,
-      effectiveness: acc.effectiveness + assessment.score?.effectiveness || 0,
-      vision: acc.vision + assessment.score?.vision || 0,
+      IQ: acc.IQ + (assessment.score?.IQ || 0),
+      evangelism: acc.evangelism + (assessment.score?.evangelism || 0),
+      determination: acc.determination + (assessment.score?.determination || 0),
+      effectiveness: acc.effectiveness + (assessment.score?.effectiveness || 0),
+      vision: acc.vision + (assessment.score?.vision || 0),
     };
   }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
   const averageScore = {
