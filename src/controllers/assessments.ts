@@ -326,7 +326,7 @@ export const setAssessmentScore: RequestHandler = async (req, res, next) => {
     if (!assessment) {
       return res.status(404).json({ message: 'Assessment not found' });
     }
-    if (assessment.status === 'in_review') {
+    if (assessment.status === 'in-review') {
       assessment.status = 'completed';
       await assessment.save();
     }

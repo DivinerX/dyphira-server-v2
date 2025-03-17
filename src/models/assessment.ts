@@ -4,7 +4,7 @@ import { z } from 'zod';
 const ASSESSMENT_STATUS = [
   'in-progress',
   'completed',
-  'in_review',
+  'in-review',
   'timeout',
   'abandoned',
 ] as const;
