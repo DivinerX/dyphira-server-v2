@@ -251,13 +251,14 @@ export const findAverageScore: RequestHandler = async (_, res) => {
       socialCapital: averageXp,
     });
   }
+  console.log(assessments)
   const totalScore = assessments.reduce((acc, assessment) => {
     return {
-      IQ: acc.IQ + assessment.score.IQ,
-      evangelism: acc.evangelism + assessment.score.evangelism,
-      determination: acc.determination + assessment.score.determination,
-      effectiveness: acc.effectiveness + assessment.score.effectiveness,
-      vision: acc.vision + assessment.score.vision,
+      IQ: acc.IQ + assessment.score?.IQ || 0,
+      evangelism: acc.evangelism + assessment.score?.evangelism || 0,
+      determination: acc.determination + assessment.score?.determination || 0,
+      effectiveness: acc.effectiveness + assessment.score?.effectiveness || 0,
+      vision: acc.vision + assessment.score?.vision || 0,
     };
   }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
   const averageScore = {
@@ -275,13 +276,25 @@ export const findUserScore: RequestHandler = async (req, res) => {
   const userId = (req.user as JwtPayload)._id;
   const user = await User.findById(userId).select('twitterScore');
   const assessments = await Assessment.find({ userId });
+  console.log(assessments)
+  if (assessments.length === 0) {
+    return res.status(200).json({
+      IQ: 0,
+      evangelism: 0,
+      determination: 0,
+      effectiveness: 0, 
+      vision: 0,
+      socialCapital: user!.twitterScore || 0,
+    });
+  }
+
   const totalScore = assessments.reduce((acc, assessment) => {
     return {
-      IQ: acc.IQ + assessment.score.IQ,
-      evangelism: acc.evangelism + assessment.score.evangelism,
-      determination: acc.determination + assessment.score.determination,
-      effectiveness: acc.effectiveness + assessment.score.effectiveness,
-      vision: acc.vision + assessment.score.vision,
+      IQ: acc.IQ + assessment.score?.IQ || 0,
+      evangelism: acc.evangelism + assessment.score?.evangelism || 0,
+      determination: acc.determination + assessment.score?.determination || 0,
+      effectiveness: acc.effectiveness + assessment.score?.effectiveness || 0,
+      vision: acc.vision + assessment.score?.vision || 0,
     };
   }, { IQ: 0, evangelism: 0, determination: 0, effectiveness: 0, vision: 0 });
   const averageScore = {
