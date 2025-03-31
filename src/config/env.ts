@@ -11,6 +11,7 @@ const envSchema = z.object({
   REDIS_HOST: z.string(),
   REDIS_PASSWORD: z.string(),
   REDIS_PORT: z.coerce.number(),
+  OPENAI_API_KEY: z.string(),
 
   TWITTER_CONSUMER_KEY: z.string(),
   TWITTER_CONSUMER_SECRET: z.string(),
