@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import APIKey from '@/models/apikey';
 
-export const auth: RequestHandler = async (req, res, next) => {
+export const apiKeyMiddleware: RequestHandler = async (req, res, next) => {
   const key =
     req.headers.apikey;
   if (!key)

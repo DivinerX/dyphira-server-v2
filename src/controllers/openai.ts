@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import axios, { AxiosResponse } from 'axios';
 import FormData from 'form-data';
 import env from '@/config/env';
+import { calculateAICost, formatCost } from '@/utils/aiCostTracker';
+import APIKey from '@/models/apikey';
+import APIUsage, { AI_MODELS } from '@/models/apiUsage';
 
 const OPENAI_BASE_URL = 'https://api.openai.com/v1';
 
@@ -66,14 +69,44 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
       });
     }
 
-    // Log token usage from the response if available
-    if (response.data.usage) {
-      console.log('Token usage:', {
-        prompt_tokens: response.data.usage.prompt_tokens,
-        completion_tokens: response.data.usage.completion_tokens,
-        total_tokens: response.data.usage.total_tokens
-      });
+    // Track AI usage and cost
+    const model = req.body.model || 'unknown';
+    const costTracking = calculateAICost(
+      model,
+      fullPath,
+      response.data.usage,
+      req.body.size, // for image generations
+      req.body.file?.duration, // for audio transcription/translation
+      req.body.input?.length // for text-to-speech
+    );
+
+    console.log('AI Usage Tracking:', {
+      model: costTracking.model,
+      endpoint: costTracking.endpoint,
+      tokenUsage: costTracking.tokenUsage,
+      estimatedCost: formatCost(costTracking.cost),
+      timestamp: costTracking.timestamp
+    });
+
+    const key = req.headers.apikey;
+    const apiKey = await APIKey.findOne({ key });
+    if (!apiKey) {
+      throw new Error('Invalid API key: No associated user found');
     }
+
+    // Validate model against AI_MODELS enum
+    if (!costTracking.model || !AI_MODELS.includes(costTracking.model as any)) {
+      throw new Error(`Invalid model: ${costTracking.model}`);
+    }
+
+    await APIUsage.create({
+      provider: 'openai',
+      model: costTracking.model,
+      endpoint: costTracking.endpoint,
+      tokens: costTracking.tokenUsage?.total_tokens || 0, // Default to 0 if undefined
+      costs: costTracking.cost,
+      user: apiKey.user
+    });
 
     res.status(response.status).json(response.data);
   } catch (error: any) {

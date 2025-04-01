@@ -22,6 +22,8 @@ import openaiProxy from '@/routes/openai';
 
 import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
 import { configureSocketIO, getSocketIO } from '@/config/socket-io';
+
+import { apiKeyMiddleware } from './middleware/apikey';
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
 const app = express();
@@ -53,7 +55,7 @@ app.use('/api/v1/assessments', assessments);
 app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/videos', videos);
 app.use('/api/v1/apikey', apikey);
-app.use('/api/v1/proxy/openai', openaiProxy);
+app.use('/api/v1/proxy/openai', apiKeyMiddleware, openaiProxy);
 app.use(errorHandler);
 
 app.get('/healthz', (_, res) => {
