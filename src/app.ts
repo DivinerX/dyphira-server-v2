@@ -17,7 +17,9 @@ import assessments from '@/routes/assessments';
 import videos from '@/routes/videos';
 import clicks from '@/routes/clicks';
 import notifications from '@/routes/notifications';
+import apikey from '@/routes/apikey';
 import openaiProxy from '@/routes/openai';
+
 import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
 import { configureSocketIO, getSocketIO } from '@/config/socket-io';
 import { errorHandler } from '@/middleware/error';
@@ -50,7 +52,8 @@ app.use('/api/v1/social', social);
 app.use('/api/v1/assessments', assessments);
 app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/videos', videos);
-app.use('/api/v1/proxy/openai', openaiProxy); 
+app.use('/api/v1/apikey', apikey);
+app.use('/api/v1/proxy/openai', openaiProxy);
 app.use(errorHandler);
 
 app.get('/healthz', (_, res) => {
