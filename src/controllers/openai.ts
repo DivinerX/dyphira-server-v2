@@ -11,6 +11,11 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
     const fullPath = req.path.replace('/openai', '');
     const method = req.method;
     
+    // Log the model being used from the request body
+    if (req.body.model) {
+      console.log(`Model being used: ${req.body.model}`);
+    }
+
     // Construct headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -58,6 +63,15 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
         params: req.query,
         timeout: 30000, // 30 second timeout
         maxContentLength: Infinity,
+      });
+    }
+
+    // Log token usage from the response if available
+    if (response.data.usage) {
+      console.log('Token usage:', {
+        prompt_tokens: response.data.usage.prompt_tokens,
+        completion_tokens: response.data.usage.completion_tokens,
+        total_tokens: response.data.usage.total_tokens
       });
     }
 
