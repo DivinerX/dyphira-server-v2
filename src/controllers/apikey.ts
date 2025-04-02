@@ -3,11 +3,25 @@ import APIKey from '../models/apikey';
 import { JwtPayload } from 'jsonwebtoken';
 import crypto from 'crypto';
 
+export const getAPIKey = async (req: Request, res: Response) => {
+	try {
+		const userId = (req.user as JwtPayload)._id;
+
+		const apiKey = await APIKey.findOne({ user: userId });
+		if (!apiKey) {
+			return res.status(404).json({ error: 'API key doesn\'t exist' });
+		}
+
+		return res.status(200).json(apiKey);
+	} catch (error) {
+		return res.status(500).json({ error: 'Failed to get API key' });
+	}
+};
+
 export const createAPIKey = async (req: Request, res: Response) => {
 	const userId = (req.user as JwtPayload)._id;
 
 	const key = crypto.randomBytes(32).toString('hex');
-
 
 	const existingKey = await APIKey.findOne({ user: userId });
 	if (existingKey) {
@@ -23,10 +37,10 @@ export const createAPIKey = async (req: Request, res: Response) => {
 };
 
 export const updateAPIKey = async (req: Request, res: Response) => {
-	const { keyId } = req.params;
+	const userId = (req.user as JwtPayload)._id;
 
 	try {
-		const apiKey = await APIKey.findById(keyId);
+		const apiKey = await APIKey.findOne({ user: userId });
 
 		if (!apiKey) {
 			return res.status(404).json({ error: 'API key not found' });

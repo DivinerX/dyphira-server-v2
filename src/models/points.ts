@@ -6,18 +6,19 @@ const pointsSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  date: Date,
   points: {
     type: [{
       date: Date,
       point: Number,
       type: {
         type: String,
-        enum: ['daily', 'talent', 'referral'],
+        enum: ['daily', 'talent', 'referral', 'api'],
       },
     }],
     default: [],
   }
 });
+
+pointsSchema.index({ userId: 1 });
 
 export const Points = mongoose.model('Points', pointsSchema);

@@ -5,6 +5,7 @@ import env from '@/config/env';
 import { calculateAICost, formatCost } from '@/utils/aiCostTracker';
 import APIKey from '@/models/apikey';
 import APIUsage, { AI_MODELS } from '@/models/apiUsage';
+import { Points } from '@/models/points';
 
 const OPENAI_BASE_URL = 'https://api.openai.com/v1';
 
@@ -13,7 +14,7 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
     // Get the full path from the request and remove the /openai/ prefix
     const fullPath = req.path.replace('/openai', '');
     const method = req.method;
-    
+
     // Log the model being used from the request body
     if (req.body.model) {
       console.log(`Model being used: ${req.body.model}`);
@@ -32,7 +33,7 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
     if (req.files && Object.keys(req.files).length > 0) {
       // Handle file uploads
       const formData = new FormData();
-      
+
       // Add files to form data
       Object.entries(req.files).forEach(([key, file]: [string, any]) => {
         formData.append(key, file.data, file.name);
@@ -107,6 +108,26 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
       costs: costTracking.cost,
       user: apiKey.user
     });
+
+    let point = await Points.findOne({ userId: apiKey.user })
+
+    if (point) {
+      point.points.push({     // Use push instead of array spread
+        type: 'api',
+        date: new Date(),
+        point: - Math.ceil(costTracking.cost * 1000)
+      })
+      await point.save()
+    } else {
+      await Points.create({
+        userId: apiKey.user,
+        points: [{
+          type: 'api',
+          date: new Date(),
+          point: - Math.ceil(costTracking.cost * 1000)
+        }]
+      })
+    }
 
     res.status(response.status).json(response.data);
   } catch (error: any) {

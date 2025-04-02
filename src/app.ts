@@ -18,6 +18,7 @@ import videos from '@/routes/videos';
 import clicks from '@/routes/clicks';
 import notifications from '@/routes/notifications';
 import apikey from '@/routes/apikey';
+import APIUsage from '@/routes/apiUsage'
 import openaiProxy from '@/routes/openai';
 
 import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
@@ -54,6 +55,7 @@ app.use('/api/v1/social', social);
 app.use('/api/v1/assessments', assessments);
 app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/videos', videos);
+app.use('/api/v1/apiusage', APIUsage)
 app.use('/api/v1/apikey', apikey);
 app.use('/api/v1/proxy/openai', apiKeyMiddleware, openaiProxy);
 app.use(errorHandler);
@@ -72,11 +74,11 @@ cron.schedule('0 0 * * *', async () => {
   await setDailyPoints();
 });
 
-  setInterval(async () => {
-    await setRealTimePoints();
-    const io = getSocketIO();
-    io.emit('points-update');
-  }, 14.4 * 60 * 1000);
+setInterval(async () => {
+  await setRealTimePoints();
+  const io = getSocketIO();
+  io.emit('points-update');
+}, 14.4 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));
