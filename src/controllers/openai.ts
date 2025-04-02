@@ -23,7 +23,7 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
     // Construct headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': req.headers.authorization || `Bearer ${env.OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
     };
 
     // Remove host header to avoid conflicts
