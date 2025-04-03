@@ -89,7 +89,7 @@ export const proxyOpenAI = async (req: Request, res: Response) => {
       timestamp: costTracking.timestamp
     });
 
-    const key = req.headers['authorization']?.slice(7);
+    const key = req.headers.apikey;
     const apiKey = await APIKey.findOne({ key });
     if (!apiKey) {
       throw new Error('Invalid API key: No associated user found');

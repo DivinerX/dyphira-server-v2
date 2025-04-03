@@ -4,7 +4,7 @@ import { Points } from '@/models/points';
 
 export const apiKeyMiddleware: RequestHandler = async (req, res, next) => {
   const key =
-    req.headers['authorization']?.slice(7);
+    req.headers.apikey;
   console.log(key)
   if (!key)
     return res.status(401).json({ error: 'Access denied. No api key provided.' });
