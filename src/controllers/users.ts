@@ -347,7 +347,7 @@ export const getTopTwitterScoreUsers: RequestHandler = async (req, res) => {
       {
         $group: {
           _id: '$fund',
-          overallScore: { 
+          overallScore: {
             $avg: {
               $add: [
                 { $ifNull: ['$assessments.score.IQ', 0] },
@@ -425,6 +425,44 @@ export const updateUser: RequestHandler = async (req, res) => {
   }
   await user.save();
   return res.status(200).json(user);
+};
+
+export const updateWalletAddress: RequestHandler = async (req, res) => {
+  const userId = (req.user as JwtPayload)._id;
+  const { walletAddress } = req.body;
+
+  const user = await User.findById(userId).select('-password -__v');
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  user.walletAddress = walletAddress;
+  await user.save();
+
+  return res.status(200).json(user);
+};
+
+export const getDepositAmount: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req.user as JwtPayload)._id;
+    const user = await User.findById(userId).select('-password -__v');
+    const walletAddress = user?.walletAddress;
+    console.log("walletAddress", walletAddress)
+    if (!walletAddress) return res.status(404).json({ message: 'Wallet not found' });
+    const response = await fetch(`https://dyphira-chain.fly.dev/transactions`)
+    console.log("response", response)
+    const {transactions} = await response.json() as {transactions: {from: string; to: string, amount: number}[]}
+    console.log(transactions)
+    const depositAmount = transactions.reduce((acc: number, transaction) => {
+      if (transaction.from === walletAddress && transaction.to === "0x7680f2fdd225f1fc27af4a2eff072814fa1c4d62") {
+        return acc + transaction.amount;
+      }
+      return acc;
+    }, 0);
+    console.log("transactions", transactions)
+    return res.status(200).json({ depositAmount });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: 'Error fetching deposit amount', error });
+  }
 };
 
 export const getDashboardFeed: RequestHandler = async (_req, res) => {

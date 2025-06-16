@@ -3,7 +3,6 @@ import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import morgan from 'morgan';
 import session from 'express-session';
-import cron from 'node-cron';
 import { createServer } from 'http';
 import '@/config/dotenv';
 import '@/config/db';
@@ -21,15 +20,11 @@ import apikey from '@/routes/apikey';
 import APIUsage from '@/routes/apiUsage'
 import openaiProxy from '@/routes/openai';
 
-import { setDailyPoints, setRealTimePoints } from '@/utils/dailyPoints';
-import { configureSocketIO, getSocketIO } from '@/config/socket-io';
-
 import { apiKeyMiddleware } from './middleware/apikey';
 import { errorHandler } from '@/middleware/error';
 import { shutdownGracefully } from '@/utils/gracefulShutdown';
 const app = express();
 const server = createServer(app);
-configureSocketIO(server);
 
 const logger = morgan('tiny');
 app.use(logger);
@@ -69,16 +64,6 @@ const port = process.env.PORT || 8000;
 server.listen(port, async () => {
   console.log(`Express app is listening on port ${port}`);
 });
-
-cron.schedule('0 0 * * *', async () => {
-  await setDailyPoints();
-});
-
-setInterval(async () => {
-  await setRealTimePoints();
-  const io = getSocketIO();
-  io.emit('points-update');
-}, 14.4 * 60 * 1000);
 
 process.on('SIGINT', (signal) => shutdownGracefully(signal, server));
 process.on('SIGTERM', (signal) => shutdownGracefully(signal, server));

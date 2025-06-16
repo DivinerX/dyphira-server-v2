@@ -25,6 +25,7 @@ export interface IUser {
   countryCode?: string;
   latitude?: number;
   longitude?: number;
+  walletAddress?: string;
 
   resetPasswordToken: string | undefined;
   resetPasswordExpires?: Date | undefined;
@@ -102,6 +103,10 @@ const userSchema = new Schema<IUser>(
     },
     longitude: {
       type: Number,
+    },
+    walletAddress: {
+      type: String,
+      trim: true,
     },
 
     referredBy: {

@@ -12,11 +12,12 @@ import {
   updateUser,
   getUserReferralPoints,
   getDashboardFeed,
+  updateWalletAddress,
+  getDepositAmount
 } from '@/controllers/users';
 import { upload } from '@/config/multer';
 import { isAdmin } from '@/middleware/isAdmin';
 import { validateObjectId } from '@/middleware/validateId';
-import { getDailyPoints, getRealTimePoints } from '@/utils/dailyPoints';
 
 import { verify } from '@/utils/twitterVerify';
 import { getClicks } from '@/controllers/clicks';
@@ -29,12 +30,11 @@ router.get('/me', auth, findCurrentUser);
 router.get('/leadership', getTopTwitterScoreUsers);
 router.get('/referrals', auth, getReferrals);
 router.get('/clicks', auth, getClicks);
-router.get('/daily-points', getDailyPoints);
-router.get('/real-time-points', getRealTimePoints);
 router.get('/rank', auth, findUserRank);
 router.get('/twitter-verify/:rest_id', verify);
 router.get('/referral-points', auth, getUserReferralPoints);
 router.get('/dashboard-feed', getDashboardFeed);
+router.get('/deposit-amount', auth, getDepositAmount);
 
 router.get('/:userId', validateObjectId('userId'), auth, isAdmin, findUser);
 router.get(
@@ -46,4 +46,5 @@ router.get(
 );
 router.post('/', register);
 router.put('/', auth, upload.single('avatar'), updateUser);
+router.put('/wallet', auth, updateWalletAddress);
 export default router;
